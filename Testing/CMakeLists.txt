@@ -53,7 +53,12 @@ ENDFOREACH()
 IF(MINC_TEST_ENVIRONMENT)
     SET(MINCTOOLS_TEST_ENVIRONMENT ${MINC_TEST_ENVIRONMENT})
 ELSE()
-    SET(MINCTOOLS_TEST_ENVIRONMENT "")
+    # Standalone build: the minc-toolkit superbuild normally hands down a PATH
+    # pointing at the freshly built tools. Without it every test script fails
+    # ("-version returned something other than zero") because none of the
+    # binaries under test are on PATH, so provide the equivalent here.
+    SET(MINCTOOLS_TEST_ENVIRONMENT
+      "PATH=${CMAKE_BINARY_DIR}/progs:${CMAKE_BINARY_DIR}/conversion:$ENV{PATH}")
 ENDIF()
 
 SET(MINCTOOLS_TEST_ENVIRONMENT1 ${MINCTOOLS_TEST_ENVIRONMENT})

@@ -22,7 +22,7 @@ defaults:
 
 env:
   # BIC-MNI dependencies built from source, in order.
-  DEPS: "libminc"
+  DEPS: "libminc mni_autoreg"
   DEPS_PREFIX: /opt/bic-mni
 
 jobs:
@@ -52,7 +52,6 @@ jobs:
       - name: Build BIC-MNI deps
         run: |
           set -euxo pipefail
-          # shellcheck disable=SC2086 # DEP_DIR_FLAGS is a list of -D flags
           DEP_DIR_FLAGS=""
           for dep in $DEPS; do
             if [ "$dep" = libminc ]; then
@@ -63,6 +62,7 @@ jobs:
               git clone --depth 1 -b develop-1.9.18 "https://github.com/BIC-MNI/$dep.git" "dep-$dep" \
                 || git clone --depth 1 "https://github.com/BIC-MNI/$dep.git" "dep-$dep"
             fi
+            # shellcheck disable=SC2086 # DEP_DIR_FLAGS is a list of -D flags
             cmake -B "dep-$dep/build" -S "dep-$dep" \
               -DCMAKE_C_COMPILER_LAUNCHER=ccache \
               -DCMAKE_CXX_COMPILER_LAUNCHER=ccache \
@@ -132,7 +132,6 @@ jobs:
       - name: Build BIC-MNI deps
         run: |
           set -euxo pipefail
-          # shellcheck disable=SC2086 # DEP_DIR_FLAGS is a list of -D flags
           DEP_DIR_FLAGS=""
           for dep in $DEPS; do
             if [ "$dep" = libminc ]; then
@@ -143,6 +142,7 @@ jobs:
               git clone --depth 1 -b develop-1.9.18 "https://github.com/BIC-MNI/$dep.git" "dep-$dep" \
                 || git clone --depth 1 "https://github.com/BIC-MNI/$dep.git" "dep-$dep"
             fi
+            # shellcheck disable=SC2086 # DEP_DIR_FLAGS is a list of -D flags
             cmake -B "dep-$dep/build" -S "dep-$dep" \
               -DCMAKE_C_COMPILER_LAUNCHER=ccache \
               -DCMAKE_CXX_COMPILER_LAUNCHER=ccache \
@@ -205,7 +205,6 @@ jobs:
       - name: Build BIC-MNI deps
         run: |
           set -euxo pipefail
-          # shellcheck disable=SC2086 # DEP_DIR_FLAGS is a list of -D flags
           DEP_DIR_FLAGS=""
           for dep in $DEPS; do
             if [ "$dep" = libminc ]; then
@@ -216,6 +215,7 @@ jobs:
               git clone --depth 1 -b develop-1.9.18 "https://github.com/BIC-MNI/$dep.git" "dep-$dep" \
                 || git clone --depth 1 "https://github.com/BIC-MNI/$dep.git" "dep-$dep"
             fi
+            # shellcheck disable=SC2086 # DEP_DIR_FLAGS is a list of -D flags
             cmake -B "dep-$dep/build" -S "dep-$dep" \
               -DCMAKE_C_COMPILER_LAUNCHER=ccache \
               -DCMAKE_CXX_COMPILER_LAUNCHER=ccache \
