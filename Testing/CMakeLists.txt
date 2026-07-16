@@ -107,82 +107,85 @@ ADD_TEST12(mincmorph-fillholes-test ${CMAKE_CURRENT_SOURCE_DIR}/mincmorph-fillho
 
 ADD_TEST12(minccmp-test ${CMAKE_CURRENT_SOURCE_DIR}/minccmp-test.pl)
 
-ADD_TEST12(mnc2nii-compress-test ${CMAKE_CURRENT_SOURCE_DIR}/mnc2nii-compress-test.sh)
+# mnc2nii / nii2mnc exist only when NIfTI support was found
+IF(NIFTI_FOUND)
+  ADD_TEST12(mnc2nii-compress-test ${CMAKE_CURRENT_SOURCE_DIR}/mnc2nii-compress-test.sh)
 
-# ------------ nii2mnc dimension-naming regression tests ----------------------
-# Self-contained: tiny committed NIfTI fixtures (nii2mnc_data/, built by
-# make_nii_fixtures.py) exercise the file-axis -> MINC spatial-axis assignment.
-# The *_zeroslice fixtures reproduce a degenerate s-form (slice column all zero)
-# that used to make nii2mnc emit "xspace" twice and drop "zspace".
-SET(_nii2mnc_bin ${CMAKE_CURRENT_SOURCE_DIR}/nii2mnc-dimnames-test.sh)
-SET(_nii2mnc_dir ${CMAKE_CURRENT_SOURCE_DIR}/nii2mnc_data)
+  # ------------ nii2mnc dimension-naming regression tests ----------------------
+  # Self-contained: tiny committed NIfTI fixtures (nii2mnc_data/, built by
+  # make_nii_fixtures.py) exercise the file-axis -> MINC spatial-axis assignment.
+  # The *_zeroslice fixtures reproduce a degenerate s-form (slice column all zero)
+  # that used to make nii2mnc emit "xspace" twice and drop "zspace".
+  SET(_nii2mnc_bin ${CMAKE_CURRENT_SOURCE_DIR}/nii2mnc-dimnames-test.sh)
+  SET(_nii2mnc_dir ${CMAKE_CURRENT_SOURCE_DIR}/nii2mnc_data)
 
-MACRO(ADD_NII2MNC_TEST _case)
-  ADD_TEST(NAME nii2mnc-dimnames-${_case}
-    COMMAND ${_nii2mnc_bin} $<TARGET_FILE:nii2mnc> $<TARGET_FILE:mincinfo>
-            ${_nii2mnc_dir}/${_case}.nii ${ARGN}
-    WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
-  set_tests_properties(nii2mnc-dimnames-${_case} PROPERTIES
-    ENVIRONMENT "${MINCTOOLS_TEST_ENVIRONMENT}" LABELS "nii2mnc")
-ENDMACRO(ADD_NII2MNC_TEST)
+  MACRO(ADD_NII2MNC_TEST _case)
+    ADD_TEST(NAME nii2mnc-dimnames-${_case}
+      COMMAND ${_nii2mnc_bin} $<TARGET_FILE:nii2mnc> $<TARGET_FILE:mincinfo>
+              ${_nii2mnc_dir}/${_case}.nii ${ARGN}
+      WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
+    set_tests_properties(nii2mnc-dimnames-${_case} PROPERTIES
+      ENVIRONMENT "${MINCTOOLS_TEST_ENVIRONMENT}" LABELS "nii2mnc")
+  ENDMACRO(ADD_NII2MNC_TEST)
 
-ADD_NII2MNC_TEST(nii_3d_ras       xspace yspace zspace)
-ADD_NII2MNC_TEST(nii_3d_permuted  xspace yspace zspace)
-ADD_NII2MNC_TEST(nii_4d_normal    time xspace yspace zspace)
-ADD_NII2MNC_TEST(nii_3d_zeroslice xspace yspace zspace)
-ADD_NII2MNC_TEST(nii_4d_zeroslice time xspace yspace zspace)
+  ADD_NII2MNC_TEST(nii_3d_ras       xspace yspace zspace)
+  ADD_NII2MNC_TEST(nii_3d_permuted  xspace yspace zspace)
+  ADD_NII2MNC_TEST(nii_4d_normal    time xspace yspace zspace)
+  ADD_NII2MNC_TEST(nii_3d_zeroslice xspace yspace zspace)
+  ADD_NII2MNC_TEST(nii_4d_zeroslice time xspace yspace zspace)
 
-# ------------ nii2mnc data-type + intensity-preservation tests ---------------
-# Each nii_dt_* / nii_scl_* fixture holds the integer ramp v=i%5 over 120 voxels
-# (min 0, max 4, sum 240; the scaled fixture maps real=stored*2-10). The test
-# converts with -double and checks real min/max/sum, then converts with the
-# default type and checks the MINC voxel type matches the NIfTI datatype.
-SET(_nii2mnc_int ${CMAKE_CURRENT_SOURCE_DIR}/nii2mnc-intensity-test.sh)
+  # ------------ nii2mnc data-type + intensity-preservation tests ---------------
+  # Each nii_dt_* / nii_scl_* fixture holds the integer ramp v=i%5 over 120 voxels
+  # (min 0, max 4, sum 240; the scaled fixture maps real=stored*2-10). The test
+  # converts with -double and checks real min/max/sum, then converts with the
+  # default type and checks the MINC voxel type matches the NIfTI datatype.
+  SET(_nii2mnc_int ${CMAKE_CURRENT_SOURCE_DIR}/nii2mnc-intensity-test.sh)
 
-MACRO(ADD_NII2MNC_INTENSITY_TEST _case _vt _min _max _sum _tol)
-  ADD_TEST(NAME nii2mnc-intensity-${_case}
-    COMMAND ${_nii2mnc_int} $<TARGET_FILE:nii2mnc> $<TARGET_FILE:mincinfo>
-            $<TARGET_FILE:mincstats> ${_nii2mnc_dir}/${_case}.nii
-            ${_vt} ${_min} ${_max} ${_sum} ${_tol}
-    WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
-  set_tests_properties(nii2mnc-intensity-${_case} PROPERTIES
-    ENVIRONMENT "${MINCTOOLS_TEST_ENVIRONMENT}" LABELS "nii2mnc")
-ENDMACRO(ADD_NII2MNC_INTENSITY_TEST)
+  MACRO(ADD_NII2MNC_INTENSITY_TEST _case _vt _min _max _sum _tol)
+    ADD_TEST(NAME nii2mnc-intensity-${_case}
+      COMMAND ${_nii2mnc_int} $<TARGET_FILE:nii2mnc> $<TARGET_FILE:mincinfo>
+              $<TARGET_FILE:mincstats> ${_nii2mnc_dir}/${_case}.nii
+              ${_vt} ${_min} ${_max} ${_sum} ${_tol}
+      WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
+    set_tests_properties(nii2mnc-intensity-${_case} PROPERTIES
+      ENVIRONMENT "${MINCTOOLS_TEST_ENVIRONMENT}" LABELS "nii2mnc")
+  ENDMACRO(ADD_NII2MNC_INTENSITY_TEST)
 
-#                            case            vartype           min max sum  tol
-ADD_NII2MNC_INTENSITY_TEST(nii_dt_uint8    "unsigned byte"     0   4   240  0)
-ADD_NII2MNC_INTENSITY_TEST(nii_dt_int8     "signed__ byte"     0   4   240  0)
-ADD_NII2MNC_INTENSITY_TEST(nii_dt_int16    "signed__ short"    0   4   240  0)
-ADD_NII2MNC_INTENSITY_TEST(nii_dt_uint16   "unsigned short"    0   4   240  0)
-ADD_NII2MNC_INTENSITY_TEST(nii_dt_int32    "signed__ long"     0   4   240  0)
-ADD_NII2MNC_INTENSITY_TEST(nii_dt_float32  "signed__ float"    0   4   240  0.001)
-ADD_NII2MNC_INTENSITY_TEST(nii_dt_float64  "signed__ double"   0   4   240  0)
-ADD_NII2MNC_INTENSITY_TEST(nii_scl_int16   "signed__ short"  -10  -2  -720  0)
+  #                            case            vartype           min max sum  tol
+  ADD_NII2MNC_INTENSITY_TEST(nii_dt_uint8    "unsigned byte"     0   4   240  0)
+  ADD_NII2MNC_INTENSITY_TEST(nii_dt_int8     "signed__ byte"     0   4   240  0)
+  ADD_NII2MNC_INTENSITY_TEST(nii_dt_int16    "signed__ short"    0   4   240  0)
+  ADD_NII2MNC_INTENSITY_TEST(nii_dt_uint16   "unsigned short"    0   4   240  0)
+  ADD_NII2MNC_INTENSITY_TEST(nii_dt_int32    "signed__ long"     0   4   240  0)
+  ADD_NII2MNC_INTENSITY_TEST(nii_dt_float32  "signed__ float"    0   4   240  0.001)
+  ADD_NII2MNC_INTENSITY_TEST(nii_dt_float64  "signed__ double"   0   4   240  0)
+  ADD_NII2MNC_INTENSITY_TEST(nii_scl_int16   "signed__ short"  -10  -2  -720  0)
 
-# ------------ mnc2nii data-type + intensity-preservation tests ---------------
-# Convert test-rnd.mnc (ints 0..4, sum 250) with each output type flag, verify
-# the NIfTI on-disk datatype code, then round-trip back and verify the sum.
-SET(_mnc2nii_dt ${CMAKE_CURRENT_SOURCE_DIR}/mnc2nii-datatype-test.sh)
-SET(_mnc2nii_src ${CMAKE_CURRENT_SOURCE_DIR}/test-rnd.mnc)
+  # ------------ mnc2nii data-type + intensity-preservation tests ---------------
+  # Convert test-rnd.mnc (ints 0..4, sum 250) with each output type flag, verify
+  # the NIfTI on-disk datatype code, then round-trip back and verify the sum.
+  SET(_mnc2nii_dt ${CMAKE_CURRENT_SOURCE_DIR}/mnc2nii-datatype-test.sh)
+  SET(_mnc2nii_src ${CMAKE_CURRENT_SOURCE_DIR}/test-rnd.mnc)
 
-MACRO(ADD_MNC2NII_DT_TEST _name _flag _dtcode _sum _tol)
-  ADD_TEST(NAME mnc2nii-datatype-${_name}
-    COMMAND ${_mnc2nii_dt} $<TARGET_FILE:mnc2nii> $<TARGET_FILE:nii2mnc>
-            $<TARGET_FILE:mincstats> ${_mnc2nii_src}
-            ${_flag} ${_dtcode} ${_sum} ${_tol}
-    WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
-  set_tests_properties(mnc2nii-datatype-${_name} PROPERTIES
-    ENVIRONMENT "${MINCTOOLS_TEST_ENVIRONMENT}" LABELS "mnc2nii")
-ENDMACRO(ADD_MNC2NII_DT_TEST)
+  MACRO(ADD_MNC2NII_DT_TEST _name _flag _dtcode _sum _tol)
+    ADD_TEST(NAME mnc2nii-datatype-${_name}
+      COMMAND ${_mnc2nii_dt} $<TARGET_FILE:mnc2nii> $<TARGET_FILE:nii2mnc>
+              $<TARGET_FILE:mincstats> ${_mnc2nii_src}
+              ${_flag} ${_dtcode} ${_sum} ${_tol}
+      WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
+    set_tests_properties(mnc2nii-datatype-${_name} PROPERTIES
+      ENVIRONMENT "${MINCTOOLS_TEST_ENVIRONMENT}" LABELS "mnc2nii")
+  ENDMACRO(ADD_MNC2NII_DT_TEST)
 
-#                       name            flag                 dtcode sum tol
-ADD_MNC2NII_DT_TEST(byte           "-byte"               256  250  0)
-ADD_MNC2NII_DT_TEST(byte_unsigned  "-byte -unsigned"     2    250  0)
-ADD_MNC2NII_DT_TEST(short          "-short"              4    250  0)
-ADD_MNC2NII_DT_TEST(short_unsigned "-short -unsigned"    512  250  0)
-ADD_MNC2NII_DT_TEST(int            "-int"                8    250  0)
-ADD_MNC2NII_DT_TEST(float          "-float"              16   250  0)
-ADD_MNC2NII_DT_TEST(double         "-double"             64   250  0)
+  #                       name            flag                 dtcode sum tol
+  ADD_MNC2NII_DT_TEST(byte           "-byte"               256  250  0)
+  ADD_MNC2NII_DT_TEST(byte_unsigned  "-byte -unsigned"     2    250  0)
+  ADD_MNC2NII_DT_TEST(short          "-short"              4    250  0)
+  ADD_MNC2NII_DT_TEST(short_unsigned "-short -unsigned"    512  250  0)
+  ADD_MNC2NII_DT_TEST(int            "-int"                8    250  0)
+  ADD_MNC2NII_DT_TEST(float          "-float"              16   250  0)
+  ADD_MNC2NII_DT_TEST(double         "-double"             64   250  0)
+ENDIF(NIFTI_FOUND)
 
 # ------------ dcm2mnc integration tests (opt-in, data fetched at build time) -
 
